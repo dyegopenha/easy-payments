@@ -27,7 +27,7 @@ paths:
               zipCode: '90210'
               amount: 49.99
               cardNumber: '4444555566667777'
-              idempotencyKey: 'unique-key-12345'
+              idempotencyKey: '4c996d8b-b3b2-45fd-81c7-353317983eb4'
       responses:
         '201':
           description: Payment processed successfully.

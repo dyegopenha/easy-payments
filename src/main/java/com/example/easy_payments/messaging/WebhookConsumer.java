@@ -33,19 +33,12 @@ public class WebhookConsumer {
    @RabbitListener(queues = RabbitMQConfig.MAIN_QUEUE)
    public void consume(Message message) {
       WebhookPayload payload = getPayload(message);
-      String url = payload.getWebhookUrl();
       int attempt = getRetryCount(message);
 
       log.info("Received delivery message for payment {} to URL: {} (Attempt {}/{}).",
-            payload.getPaymentId(), url, attempt, MAX_ATTEMPTS);
+            payload.getPaymentId(), payload.getWebhookUrl(), attempt, MAX_ATTEMPTS);
 
-      try {
-         restTemplate.postForEntity(url, payload, String.class);
-         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentId(), url);
-      } catch (Exception e) {
-         log.warn("Webhook delivery failed to URL: {} (Attempt {}). Error: {}", url, attempt, e.getMessage());
-         handleFailure(attempt, message, payload);
-      }
+      postWebhook(attempt, payload, message);
    }
 
    private WebhookPayload getPayload(Message message) {
@@ -56,6 +49,17 @@ public class WebhookConsumer {
       Integer attempt = (Integer) message.getMessageProperties().getHeaders().getOrDefault("x-attempt", 1);
       if (attempt == null) attempt = 1;
       return attempt;
+   }
+
+   private void postWebhook(int attempt, WebhookPayload payload, Message message) {
+      String url = payload.getWebhookUrl();
+      try {
+         restTemplate.postForEntity(url, payload, String.class);
+         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentId(), url);
+      } catch (Exception e) {
+         log.warn("Webhook delivery failed to URL: {} (Attempt {}). Error: {}", url, attempt, e.getMessage());
+         handleFailure(attempt, message, payload);
+      }
    }
 
    private void handleFailure(int attempt, Message message, WebhookPayload payload) {

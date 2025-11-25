@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: payment-processor
+  # PostgreSQL Configuration
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/payment_db}
+    username: ${SPRING_DATASOURCE_USERNAME:payment_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:payment_password}
+    driver-class-name: org.postgresql.Driver
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update # Use update for dev/initial setup, 'none' or 'validate' for prod
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+# Custom Property for Card Encryption (MUST be 16 bytes)
+encryption:
+  secret-key: ${ENCRYPTION_SECRET_KEY:ThisIsASecretKey}

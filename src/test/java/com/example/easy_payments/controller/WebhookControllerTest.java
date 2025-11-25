@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
-class WebhookRegistrationControllerTest {
+class WebhookControllerTest {
 
    @Mock
    private WebhookService webhookService;

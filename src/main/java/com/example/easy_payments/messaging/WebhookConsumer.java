@@ -38,7 +38,7 @@ public class WebhookConsumer {
 
    @RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
    public void handlePaymentMessage(String message, @Header(value = "x-death", required = false) List<Map<String, Object>> xDeathList) {
-      int currentAttempt = xDeathList != null ? (xDeathList.size() + 1) : 0;
+      int currentAttempt = xDeathList != null ? xDeathList.size() : 0;
 
       WebhookPayload payload = mapper.readValue(message, WebhookPayload.class);
       String webhookUrl = payload.getWebhookUrl();

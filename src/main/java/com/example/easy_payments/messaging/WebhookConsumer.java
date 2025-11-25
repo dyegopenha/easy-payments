@@ -1,16 +1,11 @@
 package com.example.easy_payments.messaging;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.easy_payments.config.RabbitMQConfig;
@@ -27,8 +22,7 @@ public class WebhookConsumer {
 
    private final ObjectMapper mapper = new ObjectMapper();
 
-   private static final List<String> DELAY_ROUTING_KEYS = Arrays.asList("delay.1", "delay.2");
-   private static final int MAX_ATTEMPTS = 2;
+   private static final int MAX_ATTEMPTS = 3;
 
    @Autowired
    public WebhookConsumer(RabbitTemplate rabbitTemplate) {
@@ -36,44 +30,58 @@ public class WebhookConsumer {
       this.restTemplate = new RestTemplate();
    }
 
-   @RabbitListener(queues = RabbitMQConfig.WEBHOOK_QUEUE)
-   public void handlePaymentMessage(String message, @Header(value = "x-death", required = false) List<Map<String, Object>> xDeathList) {
-      int currentAttempt = xDeathList != null ? xDeathList.size() : 0;
-
-      WebhookPayload payload = mapper.readValue(message, WebhookPayload.class);
-      String webhookUrl = payload.getWebhookUrl();
+   @RabbitListener(queues = RabbitMQConfig.MAIN_QUEUE)
+   public void consume(Message message) {
+      WebhookPayload payload = getPayload(message);
+      String url = payload.getWebhookUrl();
+      int attempt = getRetryCount(message);
 
       log.info("Received delivery message for payment {} to URL: {} (Attempt {}/{}).",
-            payload.getPaymentId(), webhookUrl, currentAttempt + 1, MAX_ATTEMPTS);
+            payload.getPaymentId(), url, attempt, MAX_ATTEMPTS);
 
       try {
-         restTemplate.postForEntity(webhookUrl, payload, String.class);
-         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentId(), webhookUrl);
-      } catch (ResourceAccessException | HttpClientErrorException e) {
-         log.warn("Webhook delivery failed to URL: {} (Attempt {}). Error: {}", webhookUrl, currentAttempt + 1, e.getMessage());
-         handleFailure(message, currentAttempt);
+         restTemplate.postForEntity(url, payload, String.class);
+         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentId(), url);
       } catch (Exception e) {
-         log.error("Critical, non-transient error during webhook delivery to URL: {}. Sending directly to DLQ.", webhookUrl, e);
-         handleFailure(message, MAX_ATTEMPTS);
+         log.warn("Webhook delivery failed to URL: {} (Attempt {}). Error: {}", url, attempt, e.getMessage());
+         handleFailure(attempt, message, payload);
       }
    }
 
-   private void handleFailure(String message, int currentAttempt) {
-      if (currentAttempt < MAX_ATTEMPTS) {
-         String delayRoutingKey = DELAY_ROUTING_KEYS.get(currentAttempt);
+   private WebhookPayload getPayload(Message message) {
+      return mapper.readValue(message.getBody(), WebhookPayload.class);
+   }
 
-         rabbitTemplate.convertAndSend(
-               RabbitMQConfig.DELAY_EXCHANGE,
-               delayRoutingKey,
-               message
-         );
-         log.warn("Message sent to DLX with key '{}' for retry.", delayRoutingKey);
-      } else {
-         rabbitTemplate.convertAndSend(
-               RabbitMQConfig.DLQ_NAME,
-               message
-         );
-         log.error("Webhook delivery failed after {} attempts. Message moved to DLQ.", MAX_ATTEMPTS);
+   private int getRetryCount(Message message) {
+      Integer attempt = (Integer) message.getMessageProperties().getHeaders().getOrDefault("x-attempt", 1);
+      if (attempt == null) attempt = 1;
+      return attempt;
+   }
+
+   private void handleFailure(int attempt, Message message, WebhookPayload payload) {
+      int nextAttempt = attempt + 1;
+      if (nextAttempt >= 3) {
+         saveFailedMessage(payload);
+         return;
       }
+      handleRetry(nextAttempt, message);
+   }
+
+   private void handleRetry(int nextAttempt, Message message) {
+      String routing = "retry." + nextAttempt;
+      MessageProperties newProps = new MessageProperties();
+      newProps.getHeaders().put("x-attempt", nextAttempt);
+      newProps.setContentType(message.getMessageProperties().getContentType());
+      Message newMsg = new Message(message.getBody(), newProps);
+      rabbitTemplate.send(RabbitMQConfig.RETRY_EXCHANGE, routing, newMsg);
+   }
+
+   private void saveFailedMessage(WebhookPayload payload) {
+      log.warn("Saving failed message... paymentId: {}", payload.getPaymentId());
+      // TODO persist to failed_messages table for later investigation
+      //FailedMessage fm = new FailedMessage();
+      //fm.setPayload(payload);
+      //fm.setReason("Max attempts reached");
+      //failedMessageRepository.save(fm);
    }
 }

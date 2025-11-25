@@ -14,7 +14,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update # Use update for dev/initial setup, 'none' or 'validate' for prod
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true

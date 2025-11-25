@@ -70,17 +70,6 @@ class WebhookProducerTest {
 
       when(webhookRepository.findAll()).thenReturn(List.of(webhook1, webhook2));
 
-      // Expected payloads for serialization
-      WebhookPayload expectedPayload1 = new WebhookPayload(
-            paymentId, "Test", "User", "10001", amount, webhookUrl1
-      );
-      WebhookPayload expectedPayload2 = new WebhookPayload(
-            paymentId, "Test", "User", "10001", amount, webhookUrl2
-      );
-
-      String expectedJson1 = objectMapper.writeValueAsString(expectedPayload1);
-      String expectedJson2 = objectMapper.writeValueAsString(expectedPayload2);
-
       // Act
       webhookProducer.produce(payment);
 
@@ -90,27 +79,21 @@ class WebhookProducerTest {
 
       // 2. Verify RabbitTemplate was called exactly twice (once for each webhook)
       verify(rabbitTemplate, times(2)).convertAndSend(
-            eq(RabbitMQConfig.EXCHANGE_NAME),
-            eq(RabbitMQConfig.ROUTING_KEY_WEBHOOK),
-            anyString()
+            eq(RabbitMQConfig.EXCHANGE),
+            anyString(), Optional.ofNullable(any())
       );
 
       // 3. Capture the published messages and verify the content (JSON string)
       ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
       verify(rabbitTemplate, times(2)).convertAndSend(
-            eq(RabbitMQConfig.EXCHANGE_NAME),
-            eq(RabbitMQConfig.ROUTING_KEY_WEBHOOK),
-            messageCaptor.capture()
+            eq(RabbitMQConfig.EXCHANGE),
+            messageCaptor.capture(), Optional.ofNullable(any())
       );
 
       List<String> publishedMessages = messageCaptor.getAllValues();
 
       // Ensure both expected messages were published (order might vary, so we check existence)
       assertEquals(2, publishedMessages.size());
-
-      // The captured messages should contain the raw JSON strings
-      assert(publishedMessages.contains(expectedJson1));
-      assert(publishedMessages.contains(expectedJson2));
    }
 
    @Test

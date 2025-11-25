@@ -4,97 +4,72 @@ import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.HashMap;
-import java.util.Map;
-
-/**
- * Configures RabbitMQ topology for resilient webhook processing using DLX.
- * This sets up the main queue, two retry queues for exponential backoff,
- * and a final Dead Letter Queue (DLQ).
- */
 @Configuration
 public class RabbitMQConfig {
+   public static final String EXCHANGE = "payment.webhook.exchange";
+   public static final String RETRY_EXCHANGE = "payment.webhook.retry.exchange";
+   public static final String MAIN_QUEUE = "payment.webhook.queue";
+   public static final String DLQ = "payment.webhook.dlq";
+   public static final String RETRY_PREFIX = "payment.webhook.retry.";
 
-   public static final String EXCHANGE_NAME = "payment-exchange";
-   public static final String ROUTING_KEY_WEBHOOK = "payment.webhooks";
+   public static final int RETRY_1_TTL = 2000; // 2s
+   public static final int RETRY_2_TTL = 5000; // 5s
+   public static final int RETRY_3_TTL = 10000; // 10s
 
-   // --- MAIN QUEUE AND EXCHANGE ---
-   public static final String WEBHOOK_QUEUE = "payment.webhooks";
-   public static final String DLQ_NAME = "payment.webhooks.dlq";
-
-   // --- DELAY QUEUE/EXCHANGE CONFIG ---
-   public static final String DELAY_EXCHANGE = "payment.webhooks.delay.exchange";
-   private static final long DELAY_1S = 1000;
-   private static final long DELAY_10S = 10000;
-
-   /**
-    * The main exchange where payment success messages are published.
-    */
    @Bean
-   public TopicExchange exchange() {
-      return new TopicExchange(EXCHANGE_NAME);
-   }
+   public Exchange exchange() { return ExchangeBuilder.directExchange(EXCHANGE).durable(true).build(); }
 
-   /**
-    * The main queue for processing webhooks.
-    * If a message fails, it is sent to the DELAY_EXCHANGE via dead-lettering.
-    */
    @Bean
-   public Queue webhookQueue() {
-      Map<String, Object> args = new HashMap<>();
-      // Set the Dead Letter Exchange (DLX) to handle retries
-      args.put("x-dead-letter-exchange", DELAY_EXCHANGE);
-      return new Queue(WEBHOOK_QUEUE, true, false, false, args);
-   }
+   public Exchange retryExchange() { return ExchangeBuilder.directExchange(RETRY_EXCHANGE).durable(true).build(); }
 
-   /**
-    * Binds the main queue to the main exchange.
-    */
    @Bean
-   public Binding bindingWebhook(Queue webhookQueue, TopicExchange exchange) {
-      return BindingBuilder.bind(webhookQueue).to(exchange).with(ROUTING_KEY_WEBHOOK);
+   public Queue mainQueue() {
+      // when consumer rejects without requeue, messages will be routed to retry exchange -> retry.1
+      return QueueBuilder.durable(MAIN_QUEUE)
+                         .withArgument("x-dead-letter-exchange", RETRY_EXCHANGE)
+                         .withArgument("x-dead-letter-routing-key", "retry.1")
+                         .build();
    }
 
-   // --- DLQ & RETRY TOPOLOGY ---
-
-   /**
-    * The final Dead Letter Queue where messages land after max retries.
-    */
    @Bean
-   public Queue deadLetterQueue() {
-      return new Queue(DLQ_NAME, true);
+   public Queue retryQueue1() {
+      return QueueBuilder.durable(RETRY_PREFIX + "1")
+                         .withArgument("x-message-ttl", RETRY_1_TTL)
+                         .withArgument("x-dead-letter-exchange", EXCHANGE)
+                         .withArgument("x-dead-letter-routing-key", "payment.created")
+                         .build();
    }
 
-   /**
-    * A direct exchange to manage the delayed messages.
-    */
    @Bean
-   public DirectExchange delayExchange() {
-      return new DirectExchange(DELAY_EXCHANGE);
+   public Queue retryQueue2() {
+      return QueueBuilder.durable(RETRY_PREFIX + "2")
+                         .withArgument("x-message-ttl", RETRY_2_TTL)
+                         .withArgument("x-dead-letter-exchange", EXCHANGE)
+                         .withArgument("x-dead-letter-routing-key", "payment.created")
+                         .build();
    }
 
-   /**
-    * Factory method to create a retry queue.
-    * @param delayMillis The delay time in milliseconds.
-    * @param routingKey The key used to route the message back to the main queue.
-    * @return The configured Queue.
-    */
-   private Queue createRetryQueue(long delayMillis, String routingKey) {
-      Map<String, Object> args = new HashMap<>();
-      // Sets the time the message must wait in this queue
-      args.put("x-message-ttl", delayMillis);
-      // Routes the message back to the main exchange when TTL expires
-      args.put("x-dead-letter-exchange", EXCHANGE_NAME);
-      // The routing key to re-route the message back to the main queue
-      args.put("x-dead-letter-routing-key", routingKey);
-      return new Queue(WEBHOOK_QUEUE + ".retry." + delayMillis, true, false, false, args);
+   @Bean
+   public Queue retryQueue3() {
+      return QueueBuilder.durable(RETRY_PREFIX + "3")
+                         .withArgument("x-message-ttl", RETRY_3_TTL)
+                         .withArgument("x-dead-letter-exchange", EXCHANGE)
+                         .withArgument("x-dead-letter-routing-key", "payment.created")
+                         .build();
    }
 
-   // Retry Queues for Exponential Backoff (1s, 10s)
-   @Bean public Queue retryQueue1s() { return createRetryQueue(DELAY_1S, ROUTING_KEY_WEBHOOK); }
-   @Bean public Queue retryQueue10s() { return createRetryQueue(DELAY_10S, ROUTING_KEY_WEBHOOK); }
+   @Bean
+   public Queue dlq() { return QueueBuilder.durable(DLQ).build(); }
 
-   // Bindings for Retry Queues
-   @Bean public Binding bindingRetry1s(Queue retryQueue1s) { return BindingBuilder.bind(retryQueue1s).to(delayExchange()).with("delay.1"); }
-   @Bean public Binding bindingRetry10s(Queue retryQueue10s) { return BindingBuilder.bind(retryQueue10s).to(delayExchange()).with("delay.2"); }
+   @Bean
+   public Binding binding() { return BindingBuilder.bind(mainQueue()).to(exchange()).with("payment.created").noargs(); }
+
+   @Bean
+   public Binding retry1Binding() { return BindingBuilder.bind(retryQueue1()).to(retryExchange()).with("retry.1").noargs(); }
+
+   @Bean
+   public Binding retry2Binding() { return BindingBuilder.bind(retryQueue2()).to(retryExchange()).with("retry.2").noargs(); }
+
+   @Bean
+   public Binding retry3Binding() { return BindingBuilder.bind(retryQueue3()).to(retryExchange()).with("retry.3").noargs(); }
 }

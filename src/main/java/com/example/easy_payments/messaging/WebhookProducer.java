@@ -44,10 +44,8 @@ public class WebhookProducer {
          );
 
          rabbitTemplate.convertAndSend(
-               //RabbitMQConfig.EXCHANGE,
-               //RabbitMQConfig.MAIN_QUEUE,
-               RabbitMQConfig.EXCHANGE_NAME,
-               RabbitMQConfig.ROUTING_KEY_WEBHOOK,
+               RabbitMQConfig.EXCHANGE,
+               "payment.created",
                mapper.writeValueAsString(payload)
          );
          log.debug("Webhook message published for payment {} to URL: {}", payment.getId(), webhook.getUrl());

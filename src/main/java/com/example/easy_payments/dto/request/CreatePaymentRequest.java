@@ -31,6 +31,6 @@ public class CreatePaymentRequest {
    @Pattern(regexp = "^[0-9]{13,19}$", message = "Card number must be 13 to 19 digits")
    private String cardNumber;
 
-   @NotBlank
+   @NotBlank(message = "Idempotency key is required")
    private String idempotencyKey;
 }

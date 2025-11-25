@@ -1,0 +1,28 @@
+package com.example.easy_payments.controller;
+
+import com.example.easy_payments.dto.request.CreatePaymentRequest;
+import com.example.easy_payments.dto.response.PaymentResponse;
+import com.example.easy_payments.service.PaymentService;
+import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/payments")
+@Slf4j
+public class PaymentController {
+
+   private final PaymentService paymentService;
+
+   public PaymentController(PaymentService paymentService) {
+      this.paymentService = paymentService;
+   }
+
+   @PostMapping
+   public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest request) {
+      PaymentResponse response = paymentService.createPayment(request);
+      return ResponseEntity.status(HttpStatus.CREATED).body(response);
+   }
+}

@@ -27,7 +27,7 @@ import tools.jackson.databind.ObjectMapper;
 
 
 @ExtendWith(MockitoExtension.class)
-class WebhookProducerServiceTest {
+class WebhookProducerTest {
 
    @Mock
    private WebhookRepository webhookRepository;

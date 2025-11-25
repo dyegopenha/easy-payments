@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 import tools.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
-class WebhookRetryListenerTest {
+class WebhookConsumerTest {
 
    @Mock
    private RabbitTemplate rabbitTemplate;

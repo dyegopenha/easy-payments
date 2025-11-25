@@ -34,21 +34,28 @@ public class WebhookProducer {
             payment.getId(), webhooks.size());
 
       for (WebhookEntity webhook : webhooks) {
-         WebhookPayload payload = new WebhookPayload(
-               payment.getId(),
-               payment.getFirstName(),
-               payment.getLastName(),
-               payment.getZipCode(),
-               payment.getAmount(),
-               webhook.getUrl()
-         );
-
-         rabbitTemplate.convertAndSend(
-               RabbitMQConfig.EXCHANGE,
-               "payment.created",
-               mapper.writeValueAsString(payload)
-         );
-         log.debug("Webhook message published for payment {} to URL: {}", payment.getId(), webhook.getUrl());
+         WebhookPayload payload = buildPayload(webhook, payment);
+         sendToQueue(payload);
       }
+   }
+
+   private WebhookPayload buildPayload(WebhookEntity webhook, PaymentEntity payment) {
+      return new WebhookPayload(
+            payment.getId(),
+            payment.getFirstName(),
+            payment.getLastName(),
+            payment.getZipCode(),
+            payment.getAmount(),
+            webhook.getUrl()
+      );
+   }
+
+   private void sendToQueue(WebhookPayload payload) {
+      rabbitTemplate.convertAndSend(
+            RabbitMQConfig.EXCHANGE,
+            "payment.created",
+            mapper.writeValueAsString(payload)
+      );
+      log.debug("Webhook message published for payment {} to URL: {}", payload.getPaymentId(), payload.getWebhookUrl());
    }
 }

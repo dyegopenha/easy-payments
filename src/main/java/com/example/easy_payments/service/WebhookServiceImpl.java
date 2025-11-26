@@ -24,8 +24,8 @@ public class WebhookServiceImpl implements IWebhookService {
       this.webhookRepository = webhookRepository;
    }
 
-   @Transactional
    @Override
+   @Transactional
    public WebhookResponse createWebhook(RegisterWebhookRequest request) {
       validateWebhook(request.getUrl());
 
@@ -37,6 +37,7 @@ public class WebhookServiceImpl implements IWebhookService {
    }
 
    @Override
+   @Transactional(readOnly = true)
    public List<WebhookResponse> getAllWebhooks() {
       return webhookRepository.findAll()
                               .stream()

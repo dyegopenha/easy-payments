@@ -36,7 +36,7 @@ public class WebhookConsumer {
       int attempt = getRetryCount(message);
 
       log.info("Received delivery message for payment {} to URL: {} (Attempt {}/{}).",
-            payload.getPaymentId(), payload.getWebhookUrl(), attempt, MAX_ATTEMPTS);
+            payload.getPaymentExternalId(), payload.getWebhookUrl(), attempt, MAX_ATTEMPTS);
 
       postWebhook(attempt, payload, message);
    }
@@ -55,7 +55,7 @@ public class WebhookConsumer {
       String url = payload.getWebhookUrl();
       try {
          restTemplate.postForEntity(url, payload, String.class);
-         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentId(), url);
+         log.info("Successfully delivered webhook for payment {} to URL: {}", payload.getPaymentExternalId(), url);
       } catch (Exception e) {
          log.warn("Webhook delivery failed to URL: {} (Attempt {}). Error: {}", url, attempt, e.getMessage());
          handleFailure(attempt, message, payload);
@@ -81,7 +81,7 @@ public class WebhookConsumer {
    }
 
    private void saveFailedMessage(WebhookPayload payload) {
-      log.warn("Saving failed message... paymentId: {}", payload.getPaymentId());
+      log.warn("Saving failed message... paymentExternalId: {}", payload.getPaymentExternalId());
       // TODO persist to failed_messages table for later investigation
       //FailedMessage fm = new FailedMessage();
       //fm.setPayload(payload);

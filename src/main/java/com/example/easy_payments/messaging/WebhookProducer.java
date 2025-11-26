@@ -43,7 +43,7 @@ public class WebhookProducer {
 
    private WebhookPayload buildPayload(WebhookEntity webhook, PaymentEntity payment) {
       return new WebhookPayload(
-            payment.getId(),
+            payment.getExternalId(),
             payment.getFirstName(),
             payment.getLastName(),
             payment.getZipCode(),
@@ -60,6 +60,6 @@ public class WebhookProducer {
             "payment.created",
             mapper.writeValueAsString(payload)
       );
-      log.debug("Webhook message published for payment {} to URL: {}", payload.getPaymentId(), payload.getWebhookUrl());
+      log.debug("Webhook message published for payment {} to URL: {}", payload.getPaymentExternalId(), payload.getWebhookUrl());
    }
 }

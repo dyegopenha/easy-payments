@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WebhookPayload {
-   private Long paymentId;
+   private String paymentExternalId;
    private String firstName;
    private String lastName;
    private String zipCode;

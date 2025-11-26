@@ -62,7 +62,7 @@ class WebhookConsumerTest {
 
       // 1. Create the internal DTO object
       deliveryMessageDto = new WebhookPayload(
-            100L,
+            "unique-key-12345",
             "Jane",
             "Doe",
             "12345",

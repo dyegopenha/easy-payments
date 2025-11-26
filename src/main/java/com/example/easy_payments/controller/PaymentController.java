@@ -1,5 +1,7 @@
 package com.example.easy_payments.controller;
 
+import java.util.List;
+
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
 import com.example.easy_payments.service.IPaymentService;
@@ -25,5 +27,10 @@ public class PaymentController {
    public ResponseEntity<PaymentResponse> createPayment(@Valid @RequestBody CreatePaymentRequest request) {
       PaymentResponse response = paymentService.createPayment(request);
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
+   }
+
+   @GetMapping
+   public ResponseEntity<List<PaymentResponse>> getAllPayments() {
+      return ResponseEntity.ok(paymentService.getAllPayments());
    }
 }

@@ -5,5 +5,5 @@ import com.example.easy_payments.dto.response.WebhookResponse;
 
 public interface IWebhookService {
 
-   public WebhookResponse createWebhook(RegisterWebhookRequest request);
+   WebhookResponse createWebhook(RegisterWebhookRequest request);
 }

@@ -1,5 +1,7 @@
 package com.example.easy_payments.service;
 
+import java.util.List;
+
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
 import com.example.easy_payments.exceptions.PaymentConflictException;
@@ -23,8 +25,8 @@ public class PaymentServiceImpl implements IPaymentService {
       this.webhookProducer = webhookProducer;
    }
 
-   @Transactional
    @Override
+   @Transactional
    public PaymentResponse createPayment(CreatePaymentRequest request) {
       validatePayment(request.getIdempotencyKey());
 
@@ -37,6 +39,15 @@ public class PaymentServiceImpl implements IPaymentService {
       webhookProducer.produce(savedPayment);
 
       return new PaymentResponse(savedPayment.getId(), savedPayment.getExternalId(), savedPayment.getStatus());
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public List<PaymentResponse> getAllPayments() {
+      return paymentRepository.findAll()
+                              .stream()
+                              .map(p -> new PaymentResponse(p.getId(), p.getExternalId(), p.getStatus()))
+                              .toList();
    }
 
    private void validatePayment(String idempotencyKey) {

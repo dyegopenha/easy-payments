@@ -45,6 +45,12 @@ public class WebhookServiceImpl implements IWebhookService {
                               .toList();
    }
 
+   @Override
+   @Transactional
+   public void deleteWebhook(Long id) {
+      webhookRepository.deleteById(id);
+   }
+
    private void validateWebhook(String url) {
       if (webhookRepository.findByUrl(url).isPresent()) {
          throw new WebhookConflictException(url);

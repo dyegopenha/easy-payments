@@ -10,4 +10,6 @@ public interface IWebhookService {
    WebhookResponse createWebhook(RegisterWebhookRequest request);
 
    List<WebhookResponse> getAllWebhooks();
+
+   void deleteWebhook(Long id);
 }

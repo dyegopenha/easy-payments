@@ -33,4 +33,11 @@ public class PaymentController {
    public ResponseEntity<List<PaymentResponse>> getAllPayments() {
       return ResponseEntity.ok(paymentService.getAllPayments());
    }
+
+   @GetMapping("{externalId}")
+   public ResponseEntity<PaymentResponse> getPaymentByExternalId(@PathVariable String externalId) {
+      return paymentService.findByExternalId(externalId)
+                           .map(ResponseEntity::ok)
+                           .orElse(ResponseEntity.notFound().build());
+   }
 }

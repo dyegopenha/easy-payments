@@ -1,6 +1,7 @@
 package com.example.easy_payments.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
@@ -48,6 +49,13 @@ public class PaymentServiceImpl implements IPaymentService {
                               .stream()
                               .map(p -> new PaymentResponse(p.getId(), p.getExternalId(), p.getStatus()))
                               .toList();
+   }
+
+   @Override
+   @Transactional(readOnly = true)
+   public Optional<PaymentResponse> findByExternalId(String externalId) {
+      return paymentRepository.findByExternalId(externalId)
+                              .map(p -> new PaymentResponse(p.getId(), p.getExternalId(), p.getStatus()));
    }
 
    private void validatePayment(String idempotencyKey) {

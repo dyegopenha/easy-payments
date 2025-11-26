@@ -2,7 +2,8 @@ package com.example.easy_payments.controller;
 
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
-import com.example.easy_payments.service.PaymentService;
+import com.example.easy_payments.service.IPaymentService;
+import com.example.easy_payments.service.PaymentServiceImpl;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class PaymentController {
 
-   private final PaymentService paymentService;
+   private final IPaymentService paymentService;
 
-   public PaymentController(PaymentService paymentService) {
+   public PaymentController(PaymentServiceImpl paymentService) {
       this.paymentService = paymentService;
    }
 

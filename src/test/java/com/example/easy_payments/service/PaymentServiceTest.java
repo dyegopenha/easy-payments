@@ -29,11 +29,11 @@ class PaymentServiceTest {
    @Mock
    private WebhookProducer webhookProducer;
 
-   private PaymentService paymentService;
+   private PaymentServiceImpl paymentService;
 
    @BeforeEach
    void setUp() {
-      paymentService = new PaymentService(paymentRepository, webhookProducer);
+      paymentService = new PaymentServiceImpl(paymentRepository, webhookProducer);
    }
 
    @Test

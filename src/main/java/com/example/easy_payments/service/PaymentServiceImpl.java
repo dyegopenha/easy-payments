@@ -13,32 +13,23 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
-public class PaymentService {
+public class PaymentServiceImpl implements IPaymentService {
 
    private final PaymentRepository paymentRepository;
    private final WebhookProducer webhookProducer;
 
-   public PaymentService(PaymentRepository paymentRepository, WebhookProducer webhookProducer) {
+   public PaymentServiceImpl(PaymentRepository paymentRepository, WebhookProducer webhookProducer) {
       this.paymentRepository = paymentRepository;
       this.webhookProducer = webhookProducer;
    }
 
    @Transactional
+   @Override
    public PaymentResponse createPayment(CreatePaymentRequest request) {
+      validatePayment(request.getIdempotencyKey());
 
-      if (paymentRepository.findByExternalId(request.getIdempotencyKey()).isPresent()) {
-         throw new PaymentConflictException(request.getIdempotencyKey());
-      }
-
-      PaymentEntity payment = new PaymentEntity();
-      payment.setExternalId(request.getIdempotencyKey());
-      payment.setFirstName(request.getFirstName());
-      payment.setLastName(request.getLastName());
-      payment.setZipCode(request.getZipCode());
-      payment.setCardNumber(request.getCardNumber());
-      payment.setAmount(request.getAmount());
+      PaymentEntity payment = toPaymentEntity(request);
       payment.setStatus(PaymentStatus.PROCESSED);
-
       PaymentEntity savedPayment = paymentRepository.save(payment);
 
       log.info("Payment saved securely with ID: {}", savedPayment.getId());
@@ -46,5 +37,22 @@ public class PaymentService {
       webhookProducer.produce(savedPayment);
 
       return new PaymentResponse(savedPayment.getId(), savedPayment.getExternalId(), savedPayment.getStatus());
+   }
+
+   private void validatePayment(String idempotencyKey) {
+      if (paymentRepository.findByExternalId(idempotencyKey).isPresent()) {
+         throw new PaymentConflictException(idempotencyKey);
+      }
+   }
+
+   private PaymentEntity toPaymentEntity(CreatePaymentRequest request) {
+      PaymentEntity payment = new PaymentEntity();
+      payment.setExternalId(request.getIdempotencyKey());
+      payment.setFirstName(request.getFirstName());
+      payment.setLastName(request.getLastName());
+      payment.setZipCode(request.getZipCode());
+      payment.setCardNumber(request.getCardNumber());
+      payment.setAmount(request.getAmount());
+      return payment;
    }
 }

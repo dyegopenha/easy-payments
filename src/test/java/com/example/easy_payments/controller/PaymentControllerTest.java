@@ -3,7 +3,7 @@ package com.example.easy_payments.controller;
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
 import com.example.easy_payments.model.PaymentStatus;
-import com.example.easy_payments.service.PaymentService;
+import com.example.easy_payments.service.PaymentServiceImpl;
 import com.example.easy_payments.exceptions.PaymentConflictException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 public class PaymentControllerTest {
 
    @Mock
-   private PaymentService paymentService;
+   private PaymentServiceImpl paymentService;
 
    @InjectMocks
    private PaymentController paymentController;

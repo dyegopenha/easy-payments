@@ -74,6 +74,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /payments/{externalId}:
+    get:
+      tags:
+        - Payments
+      summary: Find payment by external ID.
+      operationId: findByExternalId
+      parameters:
+        - in: path
+          name: externalId
+          schema:
+            type: string
+          required: true
+          description: The external id used to create the payment.
+      responses:
+        '200':
+          description: Payment found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '404':
+          description: Payment not found.
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /webhooks:
     get:
       tags:

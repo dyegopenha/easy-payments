@@ -1,5 +1,7 @@
 package com.example.easy_payments.controller;
 
+import java.util.List;
+
 import com.example.easy_payments.dto.request.RegisterWebhookRequest;
 import com.example.easy_payments.dto.response.WebhookResponse;
 import com.example.easy_payments.service.IWebhookService;
@@ -24,5 +26,10 @@ public class WebhookController {
    public ResponseEntity<WebhookResponse> createWebhook(@Valid @RequestBody RegisterWebhookRequest request) {
       WebhookResponse response = webhookService.createWebhook(request);
       return ResponseEntity.status(HttpStatus.CREATED).body(response);
+   }
+
+   @GetMapping
+   public ResponseEntity<List<WebhookResponse>> getAllWebhooks() {
+      return ResponseEntity.ok(webhookService.getAllWebhooks());
    }
 }

@@ -1,5 +1,7 @@
 package com.example.easy_payments.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,14 @@ public class WebhookServiceImpl implements IWebhookService {
       WebhookEntity savedWebhook = webhookRepository.save(webhook);
 
       return new WebhookResponse(savedWebhook.getId(), savedWebhook.getUrl());
+   }
+
+   @Override
+   public List<WebhookResponse> getAllWebhooks() {
+      return webhookRepository.findAll()
+                              .stream()
+                              .map(w -> new WebhookResponse(w.getId(), w.getUrl()))
+                              .toList();
    }
 
    private void validateWebhook(String url) {

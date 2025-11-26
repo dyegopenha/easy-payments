@@ -67,7 +67,9 @@ class WebhookConsumerTest {
             "Doe",
             "12345",
             testAmount,
-            targetUrl
+            targetUrl,
+            "PROCESSED",
+            "************1234"
       );
 
       // 2. Serialize the DTO into the expected JSON string for the queue payload
@@ -168,6 +170,5 @@ class WebhookConsumerTest {
       verify(rabbitTemplate, never()).convertAndSend(eq(RabbitMQConfig.EXCHANGE), anyString(), Optional.ofNullable(any()));
 
       // Check save failed message
-      //assertEquals(deliveryMessageJson, messageCaptor.getValue());
    }
 }

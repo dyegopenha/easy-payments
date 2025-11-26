@@ -7,8 +7,10 @@ import org.springframework.stereotype.Component;
 
 import com.example.easy_payments.config.RabbitMQConfig;
 import com.example.easy_payments.model.PaymentEntity;
+import com.example.easy_payments.model.PaymentStatus;
 import com.example.easy_payments.model.WebhookEntity;
 import com.example.easy_payments.repository.WebhookRepository;
+import com.example.easy_payments.util.MaskUtils;
 
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
@@ -46,7 +48,9 @@ public class WebhookProducer {
             payment.getLastName(),
             payment.getZipCode(),
             payment.getAmount(),
-            webhook.getUrl()
+            webhook.getUrl(),
+            PaymentStatus.PROCESSED.name(),
+            MaskUtils.maskCard(payment.getCardNumber())
       );
    }
 

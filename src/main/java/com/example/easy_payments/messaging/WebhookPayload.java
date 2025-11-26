@@ -16,4 +16,6 @@ public class WebhookPayload {
    private String zipCode;
    private BigDecimal amount;
    private String webhookUrl;
+   private String status;
+   private String last4Digits;
 }

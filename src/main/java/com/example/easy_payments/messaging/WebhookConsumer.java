@@ -64,7 +64,7 @@ public class WebhookConsumer {
 
    private void handleFailure(int attempt, Message message, WebhookPayload payload) {
       int nextAttempt = attempt + 1;
-      if (nextAttempt >= 3) {
+      if (nextAttempt > MAX_ATTEMPTS) {
          saveFailedMessage(payload);
          return;
       }

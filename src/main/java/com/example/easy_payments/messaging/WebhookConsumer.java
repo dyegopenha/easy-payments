@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.example.easy_payments.config.RabbitMQConfig;
+import com.example.easy_payments.model.FailedMessageEntity;
+import com.example.easy_payments.repository.FailedMessageRepository;
 
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
@@ -20,13 +22,16 @@ public class WebhookConsumer {
 
    private final RabbitTemplate rabbitTemplate;
 
+   private final FailedMessageRepository failedMessageRepository;
+
    private final ObjectMapper mapper = new ObjectMapper();
 
    private static final int MAX_ATTEMPTS = 3;
 
    @Autowired
-   public WebhookConsumer(RabbitTemplate rabbitTemplate) {
+   public WebhookConsumer(RabbitTemplate rabbitTemplate, FailedMessageRepository failedMessageRepository) {
       this.rabbitTemplate = rabbitTemplate;
+      this.failedMessageRepository = failedMessageRepository;
       this.restTemplate = new RestTemplate();
    }
 
@@ -83,10 +88,9 @@ public class WebhookConsumer {
 
    private void saveFailedMessage(WebhookPayload payload) {
       log.warn("Saving failed message... paymentExternalId: {}", payload.getPaymentExternalId());
-      // TODO persist to failed_messages table for later investigation
-      //FailedMessage fm = new FailedMessage();
-      //fm.setPayload(payload);
-      //fm.setReason("Max attempts reached");
-      //failedMessageRepository.save(fm);
+      FailedMessageEntity failedMessage = new FailedMessageEntity();
+      failedMessage.setPayload(mapper.writeValueAsString(payload));
+      failedMessage.setReason("Max attempts reached");
+      failedMessageRepository.save(failedMessage);
    }
 }

@@ -1,6 +1,9 @@
 package com.example.easy_payments.messaging;
 
 import com.example.easy_payments.config.RabbitMQConfig;
+import com.example.easy_payments.model.FailedMessageEntity;
+import com.example.easy_payments.repository.FailedMessageRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,9 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,6 +38,9 @@ class WebhookConsumerTest {
    @Mock
    private RestTemplate restTemplate;
 
+   @Mock
+   private FailedMessageRepository failedMessageRepository;
+
    private final ObjectMapper objectMapper = new ObjectMapper();
 
    private WebhookConsumer webhookConsumer;
@@ -51,7 +54,7 @@ class WebhookConsumerTest {
    @BeforeEach
    void setUp() throws Exception {
       // Initialize listener with RabbitTemplate AND ObjectMapper
-      webhookConsumer = new WebhookConsumer(rabbitTemplate);
+      webhookConsumer = new WebhookConsumer(rabbitTemplate, failedMessageRepository);
 
       // Use reflection to inject the mocked RestTemplate
       java.lang.reflect.Field field = WebhookConsumer.class.getDeclaredField("restTemplate");
@@ -148,10 +151,16 @@ class WebhookConsumerTest {
    }
 
    @Test
-   void testHandlePaymentMessage_MaxAttempts_SendToDLQ() {
+   void testHandlePaymentMessage_MaxAttempts_SaveFailedMessage() {
       // Arrange: Failure happens on the final (3rd) attempt
       when(restTemplate.postForEntity(anyString(), any(WebhookPayload.class), any(Class.class)))
             .thenThrow(new RuntimeException("Final delivery failed"));
+
+      FailedMessageEntity failedMessage = new FailedMessageEntity();
+      failedMessage.setPayload(deliveryMessageJson);
+      failedMessage.setReason("Max attempts reached");
+
+      when(failedMessageRepository.save(any(FailedMessageEntity.class))).thenReturn(failedMessage);
 
       MessageProperties newProps = new MessageProperties();
       newProps.getHeaders().put("x-attempt", 3);
@@ -169,6 +178,8 @@ class WebhookConsumerTest {
       );
       verify(rabbitTemplate, never()).convertAndSend(eq(RabbitMQConfig.EXCHANGE), anyString(), Optional.ofNullable(any()));
 
-      // Check save failed message
+      // Verify failed message entity was saved
+      ArgumentCaptor<FailedMessageEntity> entityCaptor = ArgumentCaptor.forClass(FailedMessageEntity.class);
+      verify(failedMessageRepository, times(1)).save(entityCaptor.capture());
    }
 }

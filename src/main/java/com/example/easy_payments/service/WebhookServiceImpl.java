@@ -47,7 +47,7 @@ public class WebhookServiceImpl implements IWebhookService {
 
    @Override
    @Transactional
-   public void deleteWebhook(Long id) {
+   public void deleteWebhookById(Long id) {
       webhookRepository.deleteById(id);
    }
 

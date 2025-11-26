@@ -11,5 +11,5 @@ public interface IWebhookService {
 
    List<WebhookResponse> getAllWebhooks();
 
-   void deleteWebhook(Long id);
+   void deleteWebhookById(Long id);
 }

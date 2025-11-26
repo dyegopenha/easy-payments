@@ -34,8 +34,8 @@ public class WebhookController {
    }
 
    @DeleteMapping("{id}")
-   public ResponseEntity<Void> deleteWebhook(@PathVariable Long id) {
-      webhookService.deleteWebhook(id);
+   public ResponseEntity<Void> deleteWebhookById(@PathVariable Long id) {
+      webhookService.deleteWebhookById(id);
       return ResponseEntity.noContent().build();
    }
 }

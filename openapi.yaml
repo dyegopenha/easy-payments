@@ -98,8 +98,8 @@ paths:
     post:
       tags:
         - Webhooks
-      summary: Register a new webhook endpoint.
-      operationId: registerWebhook
+      summary: Create a new webhook endpoint.
+      operationId: createWebhook
       requestBody:
         required: true
         content:
@@ -123,6 +123,30 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '409':
           description: Conflict - Webhook url already used.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /webhooks/{id}:
+    delete:
+      tags:
+        - Webhooks
+      summary: Delete a webhook by ID.
+      operationId: deleteWebhookById
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            format: int64
+          required: true
+          description: The internal ID of the webhook to delete.
+      responses:
+        '204':
+          description: Webhook successfully deleted.
+        '500':
+          description: Internal server error.
           content:
             application/json:
               schema:

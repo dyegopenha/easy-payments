@@ -154,7 +154,7 @@ class WebhookConsumerTest {
             .thenThrow(new RuntimeException("Final delivery failed"));
 
       MessageProperties newProps = new MessageProperties();
-      newProps.getHeaders().put("x-attempt", 2);
+      newProps.getHeaders().put("x-attempt", 3);
       newProps.setContentType("application/json");
       Message message = new Message(deliveryMessageJson.getBytes(), newProps);
 

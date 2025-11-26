@@ -87,10 +87,10 @@ public class WebhookConsumer {
    }
 
    private void saveFailedMessage(WebhookPayload payload) {
-      log.warn("Saving failed message... paymentExternalId: {}", payload.getPaymentExternalId());
       FailedMessageEntity failedMessage = new FailedMessageEntity();
       failedMessage.setPayload(mapper.writeValueAsString(payload));
       failedMessage.setReason("Max attempts reached");
       failedMessageRepository.save(failedMessage);
+      log.warn("Saved failed message with id {} for paymentExternalId: {}", failedMessage.getId(), payload.getPaymentExternalId());
    }
 }

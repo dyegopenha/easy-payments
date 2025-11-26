@@ -10,6 +10,26 @@ servers:
 
 paths:
   /payments:
+    get:
+      tags:
+        - Payments
+      summary: Retrieve all registered payments.
+      operationId: getAllPayments
+      responses:
+        '200':
+          description: A list of all payments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PaymentResponse'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - Payments
@@ -55,6 +75,26 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /webhooks:
+    get:
+      tags:
+        - Webhooks
+      summary: Retrieve all registered webhooks.
+      operationId: getAllWebhooks
+      responses:
+        '200':
+          description: A list of all registered webhooks (secrets are NOT included).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WebhookResponseList'
+        '500':
+          description: Internal server error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
       tags:
         - Webhooks

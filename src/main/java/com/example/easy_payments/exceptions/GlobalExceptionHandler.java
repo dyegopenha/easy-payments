@@ -36,6 +36,23 @@ public class GlobalExceptionHandler {
    }
 
    /**
+    * Handles exceptions related to webhook url violation (409 Conflict).
+    * This can be triggered by a database constraint violation.
+    */
+   @ExceptionHandler(WebhookConflictException.class)
+   public ResponseEntity<ErrorResponse> handleWebhookConflictException(
+         WebhookConflictException ex,
+         HttpServletRequest request) {
+
+      String path = request.getRequestURI();
+      log.warn("Webhook Conflict: {}", ex.getMessage());
+
+      return ResponseEntity
+            .status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), path));
+   }
+
+   /**
     * Handles database constraint violations, which often map to idempotency conflicts
     * in a race condition scenario.
     */

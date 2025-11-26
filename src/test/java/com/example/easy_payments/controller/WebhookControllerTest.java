@@ -2,7 +2,7 @@ package com.example.easy_payments.controller;
 
 import com.example.easy_payments.dto.request.RegisterWebhookRequest;
 import com.example.easy_payments.dto.response.WebhookResponse;
-import com.example.easy_payments.service.WebhookService;
+import com.example.easy_payments.service.WebhookServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class WebhookControllerTest {
 
    @Mock
-   private WebhookService webhookService;
+   private WebhookServiceImpl webhookService;
 
    @InjectMocks
    private WebhookController webhookRegistrationController;

@@ -2,7 +2,7 @@ package com.example.easy_payments.controller;
 
 import com.example.easy_payments.dto.request.RegisterWebhookRequest;
 import com.example.easy_payments.dto.response.WebhookResponse;
-import com.example.easy_payments.service.WebhookService;
+import com.example.easy_payments.service.WebhookServiceImpl;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/webhooks")
 public class WebhookController {
 
-   private final WebhookService webhookService;
+   private final WebhookServiceImpl webhookService;
 
-   public WebhookController(WebhookService webhookService) {
+   public WebhookController(WebhookServiceImpl webhookService) {
       this.webhookService = webhookService;
    }
 

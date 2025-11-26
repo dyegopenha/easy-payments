@@ -46,7 +46,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaymentResponse'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           description: Internal server error.
           content:
@@ -77,6 +77,12 @@ paths:
                 $ref: '#/components/schemas/WebhookResponse'
         '400':
           description: Invalid request data (e.g., validation failure).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict - Webhook url already used.
           content:
             application/json:
               schema:

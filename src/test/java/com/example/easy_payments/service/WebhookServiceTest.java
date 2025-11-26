@@ -24,11 +24,11 @@ public class WebhookServiceTest {
    @Mock
    private WebhookRepository webhookRepository;
 
-   private WebhookService webhookService;
+   private WebhookServiceImpl webhookService;
 
    @BeforeEach
    void setUp() {
-      webhookService = new WebhookService(webhookRepository);
+      webhookService = new WebhookServiceImpl(webhookRepository);
    }
 
    @Test

@@ -45,10 +45,7 @@ public class PaymentServiceImpl implements IPaymentService {
    @Override
    @Transactional(readOnly = true)
    public List<PaymentResponse> getAllPayments() {
-      return paymentRepository.findAll()
-                              .stream()
-                              .map(p -> new PaymentResponse(p.getId(), p.getExternalId(), p.getStatus()))
-                              .toList();
+      return paymentRepository.findAllPayments();
    }
 
    @Override

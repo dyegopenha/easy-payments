@@ -22,11 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class PaymentServiceImpl implements IPaymentService {
 
    private final PaymentRepository paymentRepository;
-   private final WebhookProducer webhookProducer;
+   private final IPaymentProcessor paymentProcessor;
 
-   public PaymentServiceImpl(PaymentRepository paymentRepository, WebhookProducer webhookProducer) {
+   public PaymentServiceImpl(PaymentRepository paymentRepository, IPaymentProcessor paymentProcessor) {
       this.paymentRepository = paymentRepository;
-      this.webhookProducer = webhookProducer;
+      this.paymentProcessor = paymentProcessor;
    }
 
    @Override
@@ -34,8 +34,7 @@ public class PaymentServiceImpl implements IPaymentService {
    public PaymentResponse createPayment(CreatePaymentRequest request) {
       validatePayment(request);
       PaymentEntity payment = savePayment(request);
-      processPayment(payment);
-      notifyPayment(payment);
+      paymentProcessor.process(payment);
 
       return new PaymentResponse(payment.getId(), payment.getExternalId(), payment.getStatus());
    }
@@ -80,13 +79,4 @@ public class PaymentServiceImpl implements IPaymentService {
       return payment;
    }
 
-   private void processPayment(PaymentEntity payment) {
-      payment.setStatus(PaymentStatus.PROCESSED);// simulating successful payment
-      paymentRepository.save(payment);
-      log.info("Payment {} with ID: {}", payment.getStatus(), payment.getId());
-   }
-
-   private void notifyPayment(PaymentEntity payment) {
-      webhookProducer.produce(payment);
-   }
 }

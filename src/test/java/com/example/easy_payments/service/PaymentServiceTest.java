@@ -27,13 +27,13 @@ class PaymentServiceTest {
    private PaymentRepository paymentRepository;
 
    @Mock
-   private WebhookProducer webhookProducer;
+   private PaymentProcessorImpl paymentProcessor;
 
    private PaymentServiceImpl paymentService;
 
    @BeforeEach
    void setUp() {
-      paymentService = new PaymentServiceImpl(paymentRepository, webhookProducer);
+      paymentService = new PaymentServiceImpl(paymentRepository, paymentProcessor);
    }
 
    @Test
@@ -70,11 +70,11 @@ class PaymentServiceTest {
       ArgumentCaptor<PaymentEntity> entityCaptor = ArgumentCaptor.forClass(PaymentEntity.class);
       verify(paymentRepository, times(1)).save(entityCaptor.capture());
 
-      // 2. Verify message fan-out was delegated to the producer service with the saved entity
-      verify(webhookProducer, times(1)).produce(savedEntity);
+      // 2. Verify payment was processed
+      verify(paymentProcessor, times(1)).process(any());
 
       // 3. Verify final response
-      assertEquals(PaymentStatus.PROCESSED, response.getStatus());
+      assertEquals(PaymentStatus.INITIATED, response.getStatus());
       assertEquals(idempotencyKey, response.getExternalId());
    }
 }

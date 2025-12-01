@@ -19,6 +19,22 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
    /**
+    * Handles exceptions related to bad request (400 Bad Request).
+    */
+   @ExceptionHandler(BadRequestException.class)
+   public ResponseEntity<ErrorResponse> handleBadRequestException(
+         BadRequestException ex,
+         HttpServletRequest request) {
+
+      String path = request.getRequestURI();
+      log.warn("Bad Request: {}", ex.getMessage());
+
+      return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), path));
+   }
+
+   /**
     * Handles exceptions related to idempotency violation (409 Conflict).
     * This can be triggered by a manual cache check or a database constraint violation.
     */

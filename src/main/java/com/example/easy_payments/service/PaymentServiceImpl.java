@@ -5,11 +5,14 @@ import java.util.Optional;
 
 import com.example.easy_payments.dto.request.CreatePaymentRequest;
 import com.example.easy_payments.dto.response.PaymentResponse;
+import com.example.easy_payments.exceptions.BadRequestException;
 import com.example.easy_payments.exceptions.PaymentConflictException;
 import com.example.easy_payments.messaging.WebhookProducer;
 import com.example.easy_payments.model.PaymentEntity;
 import com.example.easy_payments.model.PaymentStatus;
 import com.example.easy_payments.repository.PaymentRepository;
+import com.example.easy_payments.util.LuhnValidator;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,17 +32,12 @@ public class PaymentServiceImpl implements IPaymentService {
    @Override
    @Transactional
    public PaymentResponse createPayment(CreatePaymentRequest request) {
-      validatePayment(request.getIdempotencyKey());
+      validatePayment(request);
+      PaymentEntity payment = savePayment(request);
+      processPayment(payment);
+      notifyPayment(payment);
 
-      PaymentEntity payment = toPaymentEntity(request);
-      payment.setStatus(PaymentStatus.PROCESSED);
-      PaymentEntity savedPayment = paymentRepository.save(payment);
-
-      log.info("Payment saved securely with ID: {}", savedPayment.getId());
-
-      webhookProducer.produce(savedPayment);
-
-      return new PaymentResponse(savedPayment.getId(), savedPayment.getExternalId(), savedPayment.getStatus());
+      return new PaymentResponse(payment.getId(), payment.getExternalId(), payment.getStatus());
    }
 
    @Override
@@ -55,9 +53,12 @@ public class PaymentServiceImpl implements IPaymentService {
                               .map(p -> new PaymentResponse(p.getId(), p.getExternalId(), p.getStatus()));
    }
 
-   private void validatePayment(String idempotencyKey) {
-      if (paymentRepository.findByExternalId(idempotencyKey).isPresent()) {
-         throw new PaymentConflictException(idempotencyKey);
+   private void validatePayment(CreatePaymentRequest request) {
+      if (paymentRepository.findByExternalId(request.getIdempotencyKey()).isPresent()) {
+         throw new PaymentConflictException(request.getIdempotencyKey());
+      }
+      if (!LuhnValidator.isValid(request.getCardNumber())) {
+         throw new BadRequestException("Invalid card number");
       }
    }
 
@@ -70,5 +71,22 @@ public class PaymentServiceImpl implements IPaymentService {
       payment.setCardNumber(request.getCardNumber());
       payment.setAmount(request.getAmount());
       return payment;
+   }
+
+   private PaymentEntity savePayment(CreatePaymentRequest request) {
+      PaymentEntity payment = toPaymentEntity(request);
+      paymentRepository.save(payment);
+      log.info("Payment saved securely with ID: {}", payment.getId());
+      return payment;
+   }
+
+   private void processPayment(PaymentEntity payment) {
+      payment.setStatus(PaymentStatus.PROCESSED);// simulating successful payment
+      paymentRepository.save(payment);
+      log.info("Payment {} with ID: {}", payment.getStatus(), payment.getId());
+   }
+
+   private void notifyPayment(PaymentEntity payment) {
+      webhookProducer.produce(payment);
    }
 }

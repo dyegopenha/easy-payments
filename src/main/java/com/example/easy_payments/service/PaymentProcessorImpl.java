@@ -22,14 +22,11 @@ public class PaymentProcessorImpl implements IPaymentProcessor {
    @Override
    @Async
    public void process(PaymentEntity payment) {
-      processPayment(payment);
-      notifyPayment(payment);
-   }
-
-   private void processPayment(PaymentEntity payment) {
       payment.setStatus(PaymentStatus.PROCESSED);// simulating successful payment
       paymentRepository.save(payment);
       log.info("Payment {} with ID: {}", payment.getStatus(), payment.getId());
+
+      notifyPayment(payment);
    }
 
    private void notifyPayment(PaymentEntity payment) {
